@@ -1,51 +1,129 @@
 package com.adrianorc.dolaragora;
 
-import android.app.Activity;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends ActionBarActivity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
-    /**
-     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
-     */
-    private NavigationDrawerFragment mNavigationDrawerFragment;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-    /**
-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
-     */
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+public class MainActivity extends ActionBarActivity {
+
     private CharSequence mTitle;
+
+    private EditText mEditTextBRL;
+    private EditText mEditTextUSD;
+
+    private TextView mTxtQuote;
+    private TextView mTxtLastCheck;
+
+    private CurrencyInfo mCurrencyInfo;
+    private int mCurrentInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
-                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
+        mTxtQuote = (TextView) findViewById(R.id.txtQuote);
+        mTxtLastCheck = (TextView) findViewById(R.id.txtLastCheck);
 
-        // Set up the drawer.
-        mNavigationDrawerFragment.setUp(
-                R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+        mEditTextBRL = (EditText) findViewById(R.id.editBRL);
+        mEditTextUSD = (EditText) findViewById(R.id.editUSD);
+
+        mEditTextBRL.setHintTextColor(getResources().getColor(R.color.white));
+        mEditTextUSD.setHintTextColor(getResources().getColor(R.color.white));
+
+        mEditTextBRL.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (mCurrentInput == 1) {
+                    if (s.length() == 0) {
+                        mEditTextUSD.setText("");
+                    } else {
+                        mEditTextUSD.setText(String.format("%1$.2f", Double.parseDouble(mEditTextBRL.getText().toString()) / mCurrencyInfo.USD));
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        mEditTextBRL.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    mCurrentInput = 1;
+                }
+            }
+        });
+
+        mEditTextUSD.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (mCurrentInput == 2) {
+                    if (s.length() == 0) {
+                        mEditTextBRL.setText("");
+                    } else {
+                        mEditTextBRL.setText(String.format("%1$.2f", Double.parseDouble(mEditTextUSD.getText().toString()) * mCurrencyInfo.USD));
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        mEditTextUSD.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    mCurrentInput = 2;
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        refreshData();
     }
 
     @Override
@@ -59,33 +137,10 @@ public class MainActivity extends ActionBarActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_update:
-                Toast.makeText(this, "Atualizando dados. Aguarde...", Toast.LENGTH_SHORT).show();
+                refreshData();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void onNavigationDrawerItemSelected(int position) {
-        // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
-                .commit();
-    }
-
-    public void onSectionAttached(int number) {
-        switch (number) {
-            case 1:
-                mTitle = getString(R.string.title_section1);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case 3:
-                mTitle = getString(R.string.title_section3);
-                break;
         }
     }
 
@@ -96,44 +151,109 @@ public class MainActivity extends ActionBarActivity
         actionBar.setTitle(mTitle);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    private void refreshData() {
+        Toast.makeText(this, R.string.updating, Toast.LENGTH_SHORT).show();
+        new RefreshTask().execute();
+    }
 
-        public PlaceholderFragment() {
+    private void updateView() {
+        String quote = String.format(getResources().getString(R.string.quoteMessage), mCurrencyInfo.USD);
+        mTxtQuote.setText(quote);
+
+        SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        String fmtDate = fmt.format(mCurrencyInfo.lastCheck);
+
+        mTxtLastCheck.setText(getResources().getString(R.string.lastUpdateMessage).concat(fmtDate));
+    }
+
+    private void onUpdateQuote(boolean found) {
+        if (found) {
+            Toast.makeText(this, R.string.successful_update, Toast.LENGTH_SHORT).show();
+            updateView();
+        } else {
+            Toast.makeText(this, R.string.failed_update, Toast.LENGTH_SHORT).show();
         }
+    }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
+    public class RefreshTask extends AsyncTask<Void, Void, Void> {
+
+        private static final String YAHOO_FINANCES_API = "http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote";
+        private static final String USD_BRL = "USD/BRL";
+        private static final String NAME = "name";
+        private static final String PRICE = "price";
+
+        private boolean mFound = false;
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            boolean found = false;
+            double price = 0d;
+
+            try {
+                URL url = new URL(YAHOO_FINANCES_API);
+                URLConnection conn = url.openConnection();
+
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document doc = builder.parse(conn.getInputStream());
+
+                NodeList resources = doc.getElementsByTagName("resource");
+
+                for (int i = 0; i < resources.getLength() && !found; i++) {
+                    Element resource = (Element) resources.item(i);
+                    NodeList fields = resource.getElementsByTagName("field");
+
+                    for (int j = 0; j < fields.getLength() && !found; j++) {
+                        Element field = (Element) fields.item(j);
+                        String name = field.getAttribute("name");
+
+                        if (name.equals(NAME)) {
+                            if (field.getTextContent().toUpperCase().equals(USD_BRL)) {
+                                Log.w("dolarHoje", "Quote USD/BRL found!");
+                                found = true;
+                                price = extractPriceFromResource(resource);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                found = false;
+            }
+
+            if (found) {
+                mCurrencyInfo = new CurrencyInfo();
+                mCurrencyInfo.USD = price;
+                mCurrencyInfo.lastCheck = new Date();
+                mFound = found;
+            }
+
+            return null;
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
+        protected void onPostExecute(Void aVoid) {
+            MainActivity.this.onUpdateQuote(mFound);
         }
 
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
+        private double extractPriceFromResource(Element resource) throws Exception {
+            NodeList fields = resource.getElementsByTagName("field");
+
+            for (int j = 0; j < fields.getLength(); j++) {
+                Element field = (Element) fields.item(j);
+                if (field.getAttribute("name").equals(PRICE)) {
+                    Log.w("dolarHoje", "Price for quote USD/BRL found = " + field.getTextContent());
+                    String text = field.getTextContent();
+                    if (text.contains(",")) {
+                        text.replace(",", ".");
+                    }
+                    return Double.parseDouble(text);
+                }
+            }
+
+            throw new Exception("Could not find price in API result");
         }
+
     }
 
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#000000</color>
-    <color name="green">#8DC63F</color>
+    <color name="green">#9bcf55</color>
     <color name="darkGreenActionBar">#6a962e</color>
     <color name="darkGreen">#82b63a</color>
     <color name="white">#ffffff</color>

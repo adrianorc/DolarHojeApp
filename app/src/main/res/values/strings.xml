@@ -1,18 +1,13 @@
 <resources>
     <string name="app_name">Dolar Agora</string>
-
-    <string name="title_section1">Início</string>
-    <string name="title_section2">Importante</string>
-    <string name="title_section3">Sobre</string>
-
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-
-    <string name="action_example">Example action</string>
-
-    <string name="action_settings">Settings</string>
-
     <string name="dadosYahooMsg">Dados coletados do Yahoo Finances!</string>
-    <string name="dadosAtualizadosEm">Atualizado em: 02/04/2015 23:57:00</string>
+    <string name="lastUpdateMessage">Atualizado em: </string>
     <string name="action_update">Atualizar</string>
+    <string name="hint_brl">Valor em Real</string>
+    <string name="hint_usd">Valor em USD</string>
+    <string name="quoteMessageEmpty">1 USD = ... BRL</string>
+    <string name="quoteMessage">1 USD = %1$.4f BRL</string>
+    <string name="updating">Atualizando cotação do dolar...</string>
+    <string name="successful_update">Cotação atualizada com sucesso!</string>
+    <string name="failed_update">Não foi possível atualizar a cotação do dolar. Verifique se vc está conecado a Internet.</string>
 </resources>
